@@ -607,6 +607,7 @@
   }
 
   var KIND_LABELS = {
+    'select': 'Select',
     'divide': 'Divide',
     'multiply': 'Multiply',
     'subtract': 'Subtract',
@@ -656,18 +657,45 @@
       return out;
     }
 
-    /* start with enough leading digits of the dividend to reach the divisor */
+    /* walk the dividend from the left one digit at a time until the digits
+       taken are big enough to divide — each attempt is its own step */
     var cur = 0, curLsd = -1, consumed = 0;
     while (cur < divisor && consumed < n) {
-      cur = cur * 10 + digits[consumed];
+      var sd = digits[consumed];
+      var sdCol = n - 1 - consumed;
+      cur = cur * 10 + sd;
       consumed++;
       curLsd = n - consumed;
+
+      var enough = cur >= divisor;
+      var selMarks = spanMarks('div', curLsd, n - 1, 'mk-active');
+      selMarks.push({ row: 'div', col: sdCol, cls: 'mk-new' });
+
+      steps.push({
+        kind: 'select',
+        phase: 'Divide',
+        headline: (consumed === 1 ? 'Start with the ' : 'Add the ') +
+          placeName(sdCol) + ' digit of ' + dStr,
+        tokens: [
+          { v: String(sd), label: placeName(sdCol) + ' digit' }, { op: '&rarr;' },
+          { v: String(cur), label: 'digits taken' },
+          { op: enough ? '&ge;' : '&lt;' },
+          { v: vStr, label: 'divisor' }
+        ],
+        write: null,
+        writePlace: null,
+        aux: { label: 'Digits taken', value: String(cur) },
+        note: enough
+          ? cur + ' is big enough: ' + vStr + ' fits into it, so this is the number to divide.'
+          : cur + ' is smaller than ' + vStr + ', so ' + vStr + ' does not fit yet.' +
+            (consumed < n ? ' Take the next digit as well.' : ' There are no digits left to add.'),
+        view: snap({ divisor: true, marks: selMarks })
+      });
     }
 
     var workKey = 'div';          /* row holding the current working number */
     var workMsd = n - 1;          /* its most-significant column */
     var endLsd = curLsd;          /* ones column of the final working number */
-    var intro = '';
 
     if (cur < divisor) {
       /* the divisor is bigger than the whole dividend: answer is 0 */
@@ -693,11 +721,6 @@
       });
       endLsd = curLsd;
     } else {
-      if (consumed > 1) {
-        intro = ' We started with the first ' + consumed + ' digits of ' + dStr +
-          ', since ' + digits[0] + ' is smaller than ' + vStr + '.';
-      }
-
       while (true) {
         var qd = Math.floor(cur / divisor);
         var prod = qd * divisor;
@@ -722,13 +745,12 @@
           writePlace: placeName(curLsd) + ' place',
           aux: { label: 'Left over', value: String(diff) },
           note: vStr + ' fits into ' + cur + ' ' + qd + ' time' + (qd === 1 ? '' : 's') +
-            '. Write ' + qd + ' above the ' + placeName(curLsd) + ' digit of ' + dStr + '.' + intro,
+            '. Write ' + qd + ' above the ' + placeName(curLsd) + ' digit of ' + dStr + '.',
           view: snap({
             divisor: true,
             marks: wMarks.concat([{ row: 'q', col: curLsd, cls: 'mk-new' }])
           })
         });
-        intro = '';
 
         /* ---------- multiply ---------- */
         var prodIdx = workRows.length;
