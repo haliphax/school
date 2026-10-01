@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Long Multiplication &mdash; Step-by-Step Paper Solution</title>
+<style>
+  :root {
+    --desk-1: #2c3542;
+    --desk-2: #1e2530;
+    --paper: #fdfaf2;
+    --paper-2: #f7efdf;
+    --paper-edge: #e7dcc4;
+    --rule: #c8bb9d;
+    --ink: #22262d;
+    --ink-2: #59616e;
+    --ink-3: #9aa2af;
+    --accent: #1d4ed8;
+    --accent-2: #dbe8ff;
+    --carry: #c2410c;
+    --carry-2: #ffe9d6;
+    --good: #15803d;
+    --good-2: #dcf5e4;
+    --mono: "Cascadia Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
+    --cell-w: 2.75rem;
+    --cell-h: 2.75rem;
+    --reg-h: 1.55rem;
+    --gutter-w: 8.25rem;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(1100px 620px at 18% -12%, rgba(255,255,255,.09), transparent 62%),
+      radial-gradient(900px 640px at 112% 112%, rgba(255,255,255,.06), transparent 58%),
+      linear-gradient(160deg, var(--desk-1), var(--desk-2));
+    min-height: 100vh;
+    padding: 26px 18px 44px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app { max-width: 1220px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  .app-header { color: #eef2f8; margin-bottom: 18px; }
+  .app-header h1 {
+    margin: 0;
+    font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+    letter-spacing: .01em;
+    font-weight: 650;
+  }
+  .app-header h1 .glyph {
+    display: inline-block;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 10px;
+    padding: .05rem .55rem;
+    margin-right: .5rem;
+    font-family: var(--mono);
+  }
+  .app-header p { margin: .45rem 0 0; color: #b9c3d2; font-size: .95rem; }
+
+  /* ---------- toolbar ---------- */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label {
+    font-size: .68rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: #a9b5c6;
+    font-weight: 600;
+  }
+  .field input {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    width: 11.5rem;
+    padding: .55rem .7rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.93);
+    color: var(--ink);
+    outline: none;
+  }
+  .field input:focus { border-color: #7aa2ff; box-shadow: 0 0 0 3px rgba(122,162,255,.35); }
+  .times { font-size: 1.5rem; color: #cdd7e4; padding-bottom: .45rem; }
+
+  button {
+    font-family: var(--sans);
+    font-size: .92rem;
+    font-weight: 600;
+    color: #eaf0f8;
+    background: rgba(255,255,255,.11);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 10px;
+    padding: .62rem 1.05rem;
+    cursor: pointer;
+    transition: background .15s ease, transform .05s ease, opacity .15s ease;
+    white-space: nowrap;
+  }
+  button:hover { background: rgba(255,255,255,.19); }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .38; cursor: not-allowed; }
+  button.primary {
+    background: #2f6bff;
+    border-color: #4c82ff;
+    box-shadow: 0 6px 18px rgba(47,107,255,.35);
+  }
+  button.primary:hover { background: #4279ff; }
+
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
+  }
+  .nav .icon-btn {
+    font-family: var(--mono);
+    font-size: 1.02rem;
+    padding: .55rem .85rem;
+    min-width: 3.1rem;
+    text-align: center;
+  }
+  /* the play/pause button keeps one fixed size in both states: the icons are
+     drawn from boxes rather than glyphs, so font metrics can never change it */
+  #btn-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    font-family: var(--sans);
+    font-size: .92rem;
+    padding: .55rem .7rem;
+    height: 2.4125rem;
+    overflow: hidden;
+  }
+  #btn-play .ico {
+    width: 1.15rem;
+    height: 1.05rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .22rem;
+    flex: none;
+  }
+  #btn-play .ico.play i {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: .44rem 0 .44rem .74rem;
+    border-color: transparent transparent transparent #eaf0f8;
+  }
+  #btn-play .ico.pause i {
+    width: .24rem;
+    height: .86rem;
+    background: #eaf0f8;
+    border-radius: 2px;
+  }
+  #btn-play .lbl {
+    width: 3.35rem;
+    height: 1.05rem;
+    line-height: 1.05rem;
+    text-align: left;
+  }
+
+  .delay {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .68rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: #a9b5c6;
+    font-weight: 650;
+  }
+  .delay input {
+    font-family: var(--mono);
+    font-size: .95rem;
+    width: 5.8rem;
+    padding: .55rem .6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(255,255,255,.93);
+    color: var(--ink);
+    outline: none;
+  }
+  .delay input:focus { border-color: #7aa2ff; box-shadow: 0 0 0 3px rgba(122,162,255,.35); }
+  .counter {
+    font-family: var(--mono);
+    font-size: .88rem;
+    color: #d5deea;
+    background: rgba(0,0,0,.22);
+    border: 1px solid rgba(255,255,255,.12);
+    padding: .55rem .8rem;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  .scrub {
+    flex: 1 1 260px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 220px;
+  }
+  .scrub input[type="range"] { flex: 1 1 auto; min-width: 0; accent-color: #6f9dff; }
+  /* fixed floor so wider step numbers cannot nudge the slider */
+  .scrub .counter { min-width: 8.6rem; text-align: center; }
+
+  .error {
+    flex-basis: 100%;
+    color: #ffd2c2;
+    font-size: .88rem;
+    display: none;
+  }
+  .error.show { display: block; }
+
+  /* ---------- stage ---------- */
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(310px, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 980px) {
+    .stage { grid-template-columns: 1fr; }
+    .nav { margin-left: 0; }
+    .field input { width: 9.5rem; }
+  }
+
+  /* ---------- paper ---------- */
+  .paper {
+    background:
+      linear-gradient(180deg, var(--paper), var(--paper-2)),
+      repeating-linear-gradient(0deg, rgba(160,140,100,.055) 0 1px, transparent 1px 100%);
+    background-blend-mode: multiply;
+    border: 1px solid var(--paper-edge);
+    border-radius: var(--radius);
+    box-shadow: 0 22px 50px rgba(0,0,0,.38), 0 2px 0 rgba(255,255,255,.35) inset;
+    padding: 22px 20px 18px;
+    overflow-x: auto;
+  }
+  .paper-caption {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    color: var(--ink-2);
+    font-size: .74rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    font-weight: 650;
+    border-bottom: 1px solid var(--paper-edge);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  .paper-caption .prob {
+    font-family: var(--mono);
+    letter-spacing: .04em;
+    text-transform: none;
+    font-size: .95rem;
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  .worksheet { min-width: max-content; }
+
+  .wrow { display: flex; align-items: center; }
+  .wrow .gutter {
+    width: var(--gutter-w);
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .55rem;
+    padding-right: .95rem;
+    color: var(--ink-3);
+    font-size: .72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    font-weight: 650;
+  }
+  .wrow .gutter .go {
+    font-family: var(--mono);
+    font-size: 1.12rem;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink-2);
+    font-weight: 700;
+    min-width: 1.2rem;
+    text-align: right;
+  }
+  .wrow .cells { display: flex; }
+
+  .cell {
+    width: var(--cell-w);
+    height: var(--cell-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 1.62rem;
+    font-weight: 650;
+    color: var(--ink);
+    border-radius: 9px;
+    transition: background .25s ease, color .25s ease;
+    user-select: none;
+  }
+  .cell.is-blank { color: transparent; }
+  .cell.is-pending {
+    color: var(--ink-3);
+    opacity: .55;
+    background: rgba(0,0,0,.028);
+    border: 1px dashed rgba(120,105,75,.28);
+  }
+
+  /* registers */
+  .reg-row .cell {
+    width: calc(var(--cell-w) - 7px);
+    margin: 0 3.5px;
+    height: var(--reg-h);
+    font-size: .98rem;
+    color: var(--carry);
+    border: 1px solid rgba(160,132,92,.36);
+    border-radius: 5px;
+    background: rgba(255,255,255,.32);
+  }
+  .reg-row .cell.is-blank { background: rgba(255,255,255,.16); }
+  .reg-row .gutter { color: var(--carry); opacity: .75; }
+
+  /* marks */
+  .cell.mk-band { background: rgba(29,78,216,.11); }
+  .cell.mk-active {
+    background: var(--accent-2);
+    color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(29,78,216,.28) inset;
+  }
+  .cell.mk-new {
+    background: var(--carry-2);
+    color: var(--carry);
+    box-shadow: 0 0 0 2px rgba(194,65,12,.3) inset;
+    animation: pop .45s ease;
+  }
+  .reg-row .cell.mk-new { background: var(--carry-2); }
+  @keyframes pop {
+    0% { transform: scale(.72); opacity: .25; }
+    60% { transform: scale(1.12); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* rules */
+  .rule-row { margin: 8px 0; }
+  .rule-row .rulebar {
+    flex: 1;
+    border-top: 2px solid var(--rule);
+    height: 0;
+  }
+  .rule-row.double { margin: 12px 0 6px; }
+  .rule-row.double .rulebar { border-top: 4px double #a8977a; }
+
+  .top-row .cell { font-size: 1.72rem; }
+  .bot-row .cell { color: var(--ink-2); }
+  .prod-row .cell { color: var(--ink-2); }
+  .sum-row .cell { font-size: 1.72rem; }
+  .sum-row.is-answer .cell {
+    font-size: 2.05rem;
+    height: calc(var(--cell-h) + 8px);
+    font-weight: 750;
+  }
+  .sum-row.is-answer .gutter .go { color: var(--good); }
+  .cell.mk-answer {
+    background: var(--good-2);
+    color: var(--good);
+    box-shadow: 0 0 0 2px rgba(21,128,61,.28) inset;
+    animation: pop .45s ease;
+  }
+
+
+
+  /* ---------- step card ---------- */
+  .stepcard {
+    background: linear-gradient(180deg, #ffffff, #f6f8fc);
+    border: 1px solid rgba(255,255,255,.5);
+    border-radius: var(--radius);
+    box-shadow: 0 22px 50px rgba(0,0,0,.34);
+    padding: 20px 20px 22px;
+  }
+  .badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .badge {
+    font-size: .68rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #23406e;
+    background: #e3ecff;
+    border: 1px solid #c4d7ff;
+    border-radius: 999px;
+    padding: .32rem .75rem;
+  }
+  .badge.done { color: #14532d; background: var(--good-2); border-color: #b4e6c3; }
+  .step-kind {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--ink-3);
+  }
+  .stepcard h2 {
+    margin: 0 0 .35rem;
+    font-size: 1.12rem;
+    line-height: 1.45;
+    font-weight: 650;
+    color: var(--ink);
+    min-height: 3.2em;
+  }
+
+  .equation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: .5rem;
+    margin: .9rem 0 .35rem;
+  }
+  .tok {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.35rem;
+    padding: .6rem .72rem .55rem;
+    border-radius: 12px;
+  }
+  .tok.val {
+    background: #fff;
+    border: 1px solid var(--paper-edge);
+    box-shadow: 0 2px 0 rgba(20,30,50,.05);
+  }
+  .tok.val b {
+    font-family: var(--mono);
+    font-size: 1.52rem;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+  .tok.val i {
+    font-style: normal;
+    font-size: .61rem;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-top: .38rem;
+    text-align: center;
+    max-width: 8.5rem;
+  }
+  .tok.op {
+    min-width: 1.75rem;
+    font-family: var(--mono);
+    font-size: 1.45rem;
+    color: var(--ink-2);
+    background: transparent;
+    padding: .2rem;
+    align-self: center;
+  }
+  .tok.eq { min-width: 1.45rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 9px; margin: .95rem 0 .2rem; }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    border-radius: 11px;
+    padding: .52rem .82rem;
+    font-size: .87rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .chip .k {
+    font-size: .65rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    opacity: .72;
+    font-weight: 700;
+  }
+  .chip .v { font-family: var(--mono); font-size: 1.08rem; }
+  .chip.write { background: var(--good-2); color: #166534; border-color: #b7e6c5; }
+  .chip.carry { background: var(--carry-2); color: #9a3412; border-color: #f6c9ab; }
+  .chip.none { background: #eef1f6; color: var(--ink-2); border-color: #dde3ec; }
+
+  .note {
+    margin: 1rem 0 0;
+    color: var(--ink-2);
+    font-size: .92rem;
+    line-height: 1.62;
+    background: #f2f5fb;
+    border-left: 3px solid #b9cdf5;
+    border-radius: 0 10px 10px 0;
+    padding: .75rem .95rem;
+  }
+
+  .progress {
+    height: 8px;
+    border-radius: 999px;
+    background: #e3e8f1;
+    overflow: hidden;
+    margin-top: 16px;
+  }
+  .progress > i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #2f6bff, #5b8dff);
+    border-radius: 999px;
+    transition: width .25s ease;
+  }
+
+  .keys {
+    margin-top: 14px;
+    color: var(--ink-3);
+    font-size: .78rem;
+    line-height: 1.7;
+  }
+  .keys kbd {
+    font-family: var(--mono);
+    font-size: .74rem;
+    background: #eef1f6;
+    border: 1px solid #d8dee8;
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    padding: .12rem .42rem;
+    color: var(--ink-2);
+  }
+
+  .app-footer {
+    margin-top: 18px;
+    color: #93a0b1;
+    font-size: .8rem;
+    text-align: center;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
+    <h1><span class="glyph">&times;</span>Long Multiplication &mdash; Step by Step</h1>
+  </header>
+
+  <section class="toolbar" aria-label="Problem setup and navigation">
+    <div class="field">
+      <label for="inp-top">Multiplicand (top)</label>
+      <input id="inp-top" type="number" min="0" max="9999999" step="1" value="47" inputmode="numeric">
+    </div>
+    <div class="times" aria-hidden="true">&times;</div>
+    <div class="field">
+      <label for="inp-bottom">Multiplier (bottom)</label>
+      <input id="inp-bottom" type="number" min="0" max="9999999" step="1" value="35" inputmode="numeric">
+    </div>
+    <button class="primary" id="btn-load">Solve it</button>
+
+    <div class="nav" role="group" aria-label="Step controls">
+      <button class="icon-btn" id="btn-first" title="First step" aria-label="First step">&#9198;</button>
+      <button class="icon-btn" id="btn-prev" title="Previous step" aria-label="Previous step">&#9664;</button>
+      <button class="icon-btn" id="btn-play" title="Play / pause" aria-label="Play or pause"><span class="ico play"><i></i></span><span class="lbl">Play</span></button>
+      <button class="icon-btn" id="btn-next" title="Next step" aria-label="Next step">&#9654;&#9654;</button>
+      <button class="icon-btn" id="btn-last" title="Last step" aria-label="Last step">&#9197;</button>
+      <label class="delay" for="inp-delay">
+        <span>Delay</span>
+        <input id="inp-delay" type="number" min="0.1" max="60" step="0.1" value="1.4" inputmode="decimal">
+        <span>sec</span>
+      </label>
+    </div>
+
+    <div class="scrub">
+      <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Scrub through steps">
+      <div class="counter" id="step-counter">Step 1 / 1</div>
+    </div>
+
+    <div class="error" id="error"></div>
+  </section>
+
+  <main class="stage">
+    <section class="paper" aria-label="Pencil and paper worksheet">
+      <div class="paper-caption">
+        <span>Worksheet</span>
+        <span class="prob" id="prob-label">47 &times; 35</span>
+      </div>
+      <div class="worksheet" id="worksheet"></div>
+    </section>
+
+    <aside class="stepcard" aria-live="polite" aria-label="Current step">
+      <div class="badge-row">
+        <span class="badge" id="phase-badge">Partial products</span>
+        <span class="step-kind" id="step-kind">multiply</span>
+      </div>
+      <h2 id="step-headline">Enter a problem and press &ldquo;Solve it&rdquo;.</h2>
+      <div class="equation" id="step-equation"></div>
+      <div class="chips" id="step-chips"></div>
+      <p class="note" id="step-note"></p>
+      <div class="progress"><i id="progress-bar" style="width:0%"></i></div>
+    </aside>
+  </main>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     helpers
+     ============================================================ */
+  var PLACES = ['ones', 'tens', 'hundreds', 'thousands', 'ten-thousands',
+                'hundred-thousands', 'millions', 'ten-millions', 'hundred-millions', 'billions'];
+
+  function placeName(k) {
+    return (k >= 0 && k < PLACES.length) ? PLACES[k] : ('10^' + k);
+  }
+
+  function placeList(from, to) {
+    if (from === to) return placeName(from) + ' place';
+    var names = [];
+    for (var k = from; k <= to; k++) names.push(placeName(k));
+    return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + ' places';
+  }
+
+  function comma(n) {
+    return Number(n).toLocaleString('en-US');
+  }
+
+  var KIND_LABELS = {
+    'zero-fill': 'Zero fill',
+    'multiply': 'Multiply',
+    'carry-down': 'Carry down',
+    'add': 'Add',
+    'final': 'Finished'
+  };
+
+  /* ============================================================
+     solver: builds the ordered list of paper steps + display state
+     ============================================================ */
+  function solve(top, bottom) {
+    var topStr = String(top);
+    var botStr = String(bottom);
+    var tLen = topStr.length;
+    var bLen = botStr.length;
+    var topD = topStr.split('').map(Number);          // MSB first
+    var botD = botStr.split('').map(Number);          // MSB first
+    var product = top * bottom;
+    var prodStr = String(product);
+    var maxCols = Math.max(1, prodStr.length);
+
+    /* one entry per multiplier digit; shift = place of that digit */
+    var rows = [];
+    for (var idx = 0; idx < bLen; idx++) {
+      rows.push({
+        m: botD[idx],
+        shift: bLen - 1 - idx,
+        digits: [],       // LSD first, grows as the row is computed
+        revealed: 0,
+        carries: {}       // local column -> carry digit sitting in the register
+      });
+    }
+    var sum = { digits: [], revealed: 0, carries: {} };
+    var steps = [];
+
+    function snap(hl) {
+      return {
+        rows: rows.map(function (r) {
+          return {
+            revealed: r.revealed,
+            shift: r.shift,
+            carries: Object.assign({}, r.carries)
+          };
+        }),
+        sum: {
+          revealed: sum.revealed,
+          carries: Object.assign({}, sum.carries)
+        },
+        hl: hl || { marks: [] }
+      };
+    }
+
+    /* ---------- phase 1: one partial-product row per multiplier digit ---------- */
+    /* start at the ones digit of the multiplier and work left */
+    for (var r = rows.length - 1; r >= 0; r--) {
+      var row = rows[r];
+      var md = row.m;
+      var s = row.shift;
+      var carry = 0;
+
+      /* placeholder zeros first: this row starts further left, exactly the way
+         the empty lower places are filled in on paper */
+      if (s > 0) {
+        var zeroTokens = [];
+        var zeroMarks = [];
+        for (var z = 0; z < s; z++) {
+          zeroTokens.push({ v: '0', label: placeName(z) + ' place' });
+          zeroMarks.push({ row: 'row' + r, col: z, cls: 'mk-new' });
+          row.digits.push(0);
+        }
+        row.revealed = row.digits.length;
+
+        steps.push({
+          kind: 'zero-fill',
+          phase: 'Partial products',
+          headline: (s === 1 ? 'Write a zero in the ' : 'Write zeros in the ') +
+            placeList(0, s - 1) + ' of this row',
+          tokens: zeroTokens,
+          write: Array(s).fill('0').join(' '),
+          writePlace: placeList(0, s - 1),
+          carryOut: 0,
+          note: 'This row comes from the ' + placeName(s) + ' digit of ' + botStr +
+            ', so it starts in the ' + placeName(s) + ' column. The places to its right are held by zeros.',
+          view: snap({ col: 0, marks: zeroMarks })
+        });
+      }
+
+      for (var i = 0; i < tLen; i++) {
+        var td = topD[tLen - 1 - i];
+        var prod = td * md + carry;
+        var digit = prod % 10;
+        var nextCarry = Math.floor(prod / 10);
+
+        row.digits.push(digit);
+        row.revealed = row.digits.length;
+        if (nextCarry > 0) row.carries[i + 1 + s] = nextCarry;
+
+        var tokens = [
+          { v: String(td), label: placeName(i) + ' digit of ' + topStr },
+          { op: '×' },
+          { v: String(md), label: placeName(row.shift) + ' digit of ' + botStr }
+        ];
+        if (carry > 0) tokens.push({ op: '+' }, { v: String(carry), label: 'carry in' });
+        tokens.push({ op: '=' }, { v: String(prod), label: 'column product' });
+
+        var marks = [
+          { row: 'top', col: i, cls: 'mk-active' },
+          { row: 'bot', col: bLen - 1 - r, cls: 'mk-active' },
+          { row: 'row' + r, col: i + row.shift, cls: 'mk-new' }
+        ];
+        if (nextCarry > 0) marks.push({ row: 'car' + r, col: i + 1 + row.shift, cls: 'mk-new' });
+
+        var noteBits = [];
+        if (carry > 0) noteBits.push('Start from the carry of ' + carry + '.');
+        noteBits.push('Write ' + digit + ' in the ' + placeName(i + row.shift) + ' column of this row.');
+        if (nextCarry > 0) {
+          noteBits.push('Carry ' + nextCarry + ' into the ' + placeName(i + 1 + row.shift) + ' column.');
+        } else {
+          noteBits.push('Nothing left to carry.');
+        }
+
+        steps.push({
+          kind: 'multiply',
+          phase: 'Partial products',
+          headline: 'Multiply the ' + placeName(i) + ' digit of ' + topStr +
+            ' by the ' + placeName(row.shift) + ' digit of ' + botStr,
+          tokens: tokens,
+          write: digit,
+          writePlace: placeName(i + row.shift),
+          carryOut: nextCarry,
+          note: noteBits.join(' '),
+          view: snap({ col: i + row.shift, marks: marks })
+        });
+
+        carry = nextCarry;
+      }
+
+      /* leftover carry becomes the leading digit of the row */
+      if (carry > 0) {
+        row.digits.push(carry);
+        row.revealed = row.digits.length;
+
+        steps.push({
+          kind: 'carry-down',
+          phase: 'Partial products',
+          headline: 'Carry the leftover ' + carry + ' down as the leading digit of this row',
+          tokens: [
+            { v: String(carry), label: 'leftover carry' },
+            { op: '=' },
+            { v: String(carry), label: 'leading digit' }
+          ],
+          write: carry,
+          writePlace: placeName(tLen + row.shift),
+          carryOut: 0,
+          note: 'Every digit of ' + topStr + ' has been multiplied, so the leftover ' + carry +
+            ' is written as the first digit of this row.',
+          view: snap({ col: tLen + row.shift, marks: [
+            { row: 'row' + r, col: tLen + row.shift, cls: 'mk-new' }
+          ] })
+        });
+      }
+
+      /* rows already sit in their final columns: the zeros written above
+         hold the lower places, so nothing has to be shifted afterwards */
+    }
+
+    /* ---------- phase 2: add the partial rows column by column ---------- */
+    var carry = 0;
+    for (var c = 0; c < maxCols; c++) {
+      var addends = [];
+      var addMarks = [];
+
+      rows.forEach(function (row, r) {
+        if (c < row.digits.length) {
+          addends.push(row.digits[c]);
+          addMarks.push({ row: 'row' + r, col: c, cls: 'mk-active' });
+        }
+      });
+
+      var total = carry;
+      addends.forEach(function (d) { total += d; });
+      var digit2 = total % 10;
+      var nextCarry2 = Math.floor(total / 10);
+
+      sum.digits.push(digit2);
+      sum.revealed = sum.digits.length;
+      if (nextCarry2 > 0) sum.carries[c + 1] = nextCarry2;
+
+      var aTokens = [];
+      addends.forEach(function (d, k) {
+        if (k) aTokens.push({ op: '+' });
+        aTokens.push({ v: String(d), label: 'partial product digit' });
+      });
+      if (carry > 0) aTokens.push({ op: '+' }, { v: String(carry), label: 'carry in' });
+      aTokens.push({ op: '=' }, { v: String(total), label: 'column total' });
+
+      var aMarks = addMarks.concat([{ row: 'sum', col: c, cls: 'mk-new' }]);
+      if (nextCarry2 > 0) aMarks.push({ row: 'sumcar', col: c + 1, cls: 'mk-new' });
+
+      var aNote = [];
+      if (addends.length > 1) aNote.push('Add the ' + addends.length + ' digits stacked in this column.');
+      else aNote.push('Bring down the single digit stacked in this column.');
+      if (carry > 0) aNote.push('Add the carry of ' + carry + ' as well.');
+      if (nextCarry2 > 0) {
+        aNote.push('The total is ' + total + ': write ' + digit2 + ' and carry ' + nextCarry2 +
+          ' into the ' + placeName(c + 1) + ' column.');
+      } else {
+        aNote.push('The total is ' + total + ', which fits in one digit, so nothing is carried.');
+      }
+
+      steps.push({
+        kind: 'add',
+        phase: 'Add the rows',
+        headline: 'Add every digit in the ' + placeName(c) + ' column',
+        tokens: aTokens,
+        write: digit2,
+        writePlace: placeName(c),
+        carryOut: nextCarry2,
+        note: aNote.join(' '),
+        view: snap({ col: c, marks: aMarks })
+      });
+
+      carry = nextCarry2;
+    }
+
+    /* ---------- phase 3: the finished problem ---------- */
+    var finalMarks = [];
+    for (var fj = 0; fj < maxCols; fj++) {
+      finalMarks.push({ row: 'sum', col: fj, cls: 'mk-answer' });
+    }
+    steps.push({
+      kind: 'final',
+      phase: 'Done',
+      headline: topStr + ' × ' + botStr + ' = ' + comma(product),
+      tokens: [
+        { v: topStr, label: 'multiplicand' },
+        { op: '×' },
+        { v: botStr, label: 'multiplier' },
+        { op: '=' },
+        { v: comma(product), label: 'product' }
+      ],
+      write: null,
+      writePlace: null,
+      carryOut: 0,
+      note: 'The row below the double line is the answer: ' + comma(product) + '.',
+      view: snap({ col: null, marks: finalMarks })
+    });
+
+    return {
+      top: top,
+      bottom: bottom,
+      topD: topD,
+      botD: botD,
+      tLen: tLen,
+      bLen: bLen,
+      product: product,
+      maxCols: maxCols,
+      rows: rows.map(function (r) {
+        return { m: r.m, shift: r.shift, digits: r.digits };
+      }),
+      sumDigits: sum.digits,
+      steps: steps
+    };
+  }
+
+  /* ============================================================
+     worksheet renderer
+     ============================================================ */
+  function renderWorksheet(sol, step) {
+    var v = step.view;
+    var maxCols = sol.maxCols;
+    var marks = {};
+    (v.hl.marks || []).forEach(function (m) { marks[m.row + '#' + m.col] = m.cls; });
+    var band = (v.hl.col === null || v.hl.col === undefined) ? null : v.hl.col;
+
+    function cell(rowKey, col, text, pending, extra) {
+      var cls = ['cell'];
+      if (extra) cls.push(extra);
+      /* the column band covers only the working rows; the multiplicand and
+         multiplier cells are marked separately in the "used in this step" colour */
+      if (band !== null && band === col && rowKey !== 'top' && rowKey !== 'bot') cls.push('mk-band');
+      var mk = marks[rowKey + '#' + col];
+      if (mk) cls.push(mk);
+
+      if (text === null || text === undefined || text === '') {
+        if (pending) {
+          cls.push('is-pending');
+          text = '·';
+        } else {
+          cls.push('is-blank');
+          text = '';
+        }
+      }
+      return '<div class="' + cls.join(' ') + '">' + text + '</div>';
+    }
+
+    function row(label, op, cellsHTML, extraCls) {
+      return '<div class="wrow ' + (extraCls || '') + '">' +
+        '<div class="gutter">' +
+          '<span class="gl">' + (label || '') + '</span>' +
+          (op ? '<span class="go">' + op + '</span>' : '<span class="go"></span>') +
+        '</div>' +
+        '<div class="cells">' + cellsHTML + '</div>' +
+      '</div>';
+    }
+
+    function rule(double) {
+      return '<div class="wrow rule-row' + (double ? ' double' : '') + '">' +
+        '<div class="gutter"></div><div class="rulebar"></div></div>';
+    }
+
+    var out = [];
+    var j, txt, pend, li, cv, sv;
+
+    /* multiplicand */
+    var h = '';
+    for (j = maxCols - 1; j >= 0; j--) {
+      h += cell('top', j, j < sol.tLen ? String(sol.topD[sol.tLen - 1 - j]) : null, false);
+    }
+    out.push(row('', '', h, 'top-row'));
+
+    /* multiplier */
+    h = '';
+    for (j = maxCols - 1; j >= 0; j--) {
+      h += cell('bot', j, j < sol.bLen ? String(sol.botD[sol.bLen - 1 - j]) : null, false);
+    }
+    out.push(row('', '×', h, 'bot-row'));
+
+    out.push(rule(false));
+
+    /* partial product rows, ones-row first (display order) */
+    for (var r = sol.rows.length - 1; r >= 0; r--) {
+      var rd = sol.rows[r];
+      var vv = v.rows[r];
+
+      /* carry register for this row */
+      h = '';
+      for (j = maxCols - 1; j >= 0; j--) {
+        cv = vv.carries[j];
+        h += cell('car' + r, j, (cv === undefined || cv === null) ? null : String(cv), false, 'slot');
+      }
+      out.push(row('carry', '', h, 'reg-row'));
+
+      /* the row itself: digits are stored column-aligned, placeholder zeros included */
+      h = '';
+      for (j = maxCols - 1; j >= 0; j--) {
+        txt = null;
+        pend = false;
+        if (j < rd.digits.length) {
+          if (j < vv.revealed) txt = String(rd.digits[j]);
+          else pend = true;
+        }
+        h += cell('row' + r, j, txt, pend);
+      }
+      out.push(row('row ' + (sol.rows.length - r), rd.m + ' ×', h, 'prod-row'));
+    }
+
+    out.push(rule(true));
+
+    /* carry register for the running total */
+    h = '';
+    for (j = maxCols - 1; j >= 0; j--) {
+      sv = v.sum.carries[j];
+      h += cell('sumcar', j, (sv === undefined || sv === null) ? null : String(sv), false, 'slot');
+    }
+    out.push(row('carry', '', h, 'reg-row'));
+
+    /* summed row */
+    h = '';
+    for (j = maxCols - 1; j >= 0; j--) {
+      txt = null;
+      pend = false;
+      if (j < sol.sumDigits.length) {
+        if (j < v.sum.revealed) txt = String(sol.sumDigits[j]);
+        else pend = true;
+      }
+      h += cell('sum', j, txt, pend);
+    }
+    /* the summed row is the answer; the last step highlights it in place */
+    out.push(row('', step.kind === 'final' ? '=' : '+', h,
+      'sum-row' + (step.kind === 'final' ? ' is-answer' : '')));
+
+    return out.join('');
+  }
+
+  /* ============================================================
+     step panel renderer
+     ============================================================ */
+  function renderTokens(tokens) {
+    return tokens.map(function (t) {
+      if (t.op) {
+        return '<span class="tok op' + (t.op === '=' ? ' eq' : '') + '">' + t.op + '</span>';
+      }
+      return '<span class="tok val"><b>' + t.v + '</b><i>' + t.label + '</i></span>';
+    }).join('');
+  }
+
+  /* ============================================================
+     app state + wiring
+     ============================================================ */
+  var el = {
+    top: document.getElementById('inp-top'),
+    bottom: document.getElementById('inp-bottom'),
+    load: document.getElementById('btn-load'),
+    first: document.getElementById('btn-first'),
+    prev: document.getElementById('btn-prev'),
+    play: document.getElementById('btn-play'),
+    next: document.getElementById('btn-next'),
+    last: document.getElementById('btn-last'),
+    scrub: document.getElementById('scrub'),
+    delay: document.getElementById('inp-delay'),
+    counter: document.getElementById('step-counter'),
+    error: document.getElementById('error'),
+    worksheet: document.getElementById('worksheet'),
+    prob: document.getElementById('prob-label'),
+    badge: document.getElementById('phase-badge'),
+    kind: document.getElementById('step-kind'),
+    headline: document.getElementById('step-headline'),
+    equation: document.getElementById('step-equation'),
+    chips: document.getElementById('step-chips'),
+    note: document.getElementById('step-note'),
+    progress: document.getElementById('progress-bar')
+  };
+
+  var state = { sol: null, i: 0, timer: null };
+
+  /* the field is in seconds; the timer wants milliseconds */
+  function stepDelay() {
+    var sec = parseFloat(el.delay.value);
+    if (!isFinite(sec)) sec = 1.4;
+    return Math.round(Math.max(0.1, Math.min(60, sec)) * 1000);
+  }
+
+  function pause() {
+    if (state.timer) {
+      clearInterval(state.timer);
+      state.timer = null;
+    }
+    el.play.innerHTML = '<span class="ico play"><i></i></span><span class="lbl">Play</span>';
+    el.play.title = 'Play';
+  }
+
+  function play() {
+    if (state.timer || !state.sol) return;
+    if (state.i >= state.sol.steps.length - 1) state.i = 0;
+    el.play.innerHTML = '<span class="ico pause"><i></i><i></i></span><span class="lbl">Pause</span>';
+    el.play.title = 'Pause';
+    state.timer = setInterval(function () {
+      if (state.i >= state.sol.steps.length - 1) {
+        pause();
+        return;
+      }
+      state.i += 1;
+      render();
+    }, stepDelay());
+  }
+
+  function goto(i) {
+    if (!state.sol) return;
+    state.i = Math.max(0, Math.min(state.sol.steps.length - 1, i));
+    render();
+  }
+
+  function render() {
+    var sol = state.sol;
+    if (!sol) return;
+    var step = sol.steps[state.i];
+    var total = sol.steps.length;
+
+    el.worksheet.innerHTML = renderWorksheet(sol, step);
+    el.prob.textContent = sol.top + ' × ' + sol.bottom;
+
+    el.badge.textContent = step.phase;
+    el.badge.className = 'badge' + (step.kind === 'final' ? ' done' : '');
+    el.kind.textContent = KIND_LABELS[step.kind] || step.kind;
+
+    el.headline.textContent = step.headline;
+    el.equation.innerHTML = renderTokens(step.tokens);
+
+    var chips = '';
+    if (step.write !== null && step.write !== undefined) {
+      chips += '<span class="chip write"><span class="k">Write down</span>' +
+        '<span class="v">' + step.write + '</span>' +
+        (step.writePlace ? '<span class="k">' + step.writePlace + ' place</span>' : '') +
+        '</span>';
+    }
+    if (step.carryOut > 0) {
+      chips += '<span class="chip carry"><span class="k">Carry</span>' +
+        '<span class="v">' + step.carryOut + '</span></span>';
+    } else if (step.kind !== 'final' && step.kind !== 'shift') {
+      chips += '<span class="chip none"><span class="k">Carry</span><span class="v">none</span></span>';
+    }
+    el.chips.innerHTML = chips;
+    el.note.textContent = step.note;
+
+    el.counter.textContent = 'Step ' + (state.i + 1) + ' / ' + total;
+    el.progress.style.width = ((state.i + 1) / total * 100).toFixed(2) + '%';
+
+    el.scrub.max = String(total - 1);
+    el.scrub.value = String(state.i);
+
+    el.first.disabled = state.i === 0;
+    el.prev.disabled = state.i === 0;
+    el.next.disabled = state.i === total - 1;
+    el.last.disabled = state.i === total - 1;
+  }
+
+  function showError(msg) {
+    el.error.textContent = msg;
+    el.error.className = 'error show';
+  }
+
+  function clearError() {
+    el.error.textContent = '';
+    el.error.className = 'error';
+  }
+
+  function load() {
+    pause();
+    clearError();
+
+    var rawTop = el.top.value.trim();
+    var rawBot = el.bottom.value.trim();
+
+    if (!/^\d{1,7}$/.test(rawTop) || !/^\d{1,7}$/.test(rawBot)) {
+      showError('Both numbers must be whole numbers from 0 to 9,999,999.');
+      return;
+    }
+
+    var top = parseInt(rawTop, 10);
+    var bottom = parseInt(rawBot, 10);
+
+    state.sol = solve(top, bottom);
+    state.i = 0;
+
+    /* shrink the digit cells if the worksheet is wide */
+    var w = state.sol.maxCols;
+    el.worksheet.style.setProperty('--cell-w', w > 13 ? '1.85rem' : w > 10 ? '2.15rem' : '2.75rem');
+
+    render();
+  }
+
+  el.load.addEventListener('click', load);
+  el.first.addEventListener('click', function () { pause(); goto(0); });
+  el.prev.addEventListener('click', function () { pause(); goto(state.i - 1); });
+  el.next.addEventListener('click', function () { pause(); goto(state.i + 1); });
+  el.last.addEventListener('click', function () {
+    pause();
+    goto(state.sol ? state.sol.steps.length - 1 : 0);
+  });
+  el.play.addEventListener('click', function () {
+    if (state.timer) pause();
+    else play();
+  });
+  el.scrub.addEventListener('input', function () {
+    pause();
+    goto(parseInt(el.scrub.value, 10) || 0);
+  });
+
+  /* changing the delay retunes a running playback right away */
+  el.delay.addEventListener('input', function () {
+    if (state.timer) {
+      pause();
+      play();
+    }
+  });
+
+  el.top.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') load();
+  });
+  el.bottom.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') load();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+    if (e.key === 'ArrowRight') { pause(); goto(state.i + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { pause(); goto(state.i - 1); e.preventDefault(); }
+    else if (e.key === 'Home') { pause(); goto(0); e.preventDefault(); }
+    else if (e.key === 'End') { pause(); goto(state.sol ? state.sol.steps.length - 1 : 0); e.preventDefault(); }
+    else if (e.key === ' ') {
+      if (state.timer) pause(); else play();
+      e.preventDefault();
+    } else if (e.key === 'r' || e.key === 'R') {
+      load();
+      e.preventDefault();
+    }
+  });
+
+  /* boot with the classic worked example */
+  load();
+})();
+</script>
+</body>
+</html>
