@@ -11,5 +11,5 @@ That said, these were not naively one-shot through a stochastic nightmare box an
 Since the idea is to help with my kids' education, I have personally verified the behavior of these as
 fit for purpose.
 
-- **🧠 Models:** Xiaomi MiMo v2.6 Flash/Pro
+- **🧠 Models:** [Xiaomi MiMo v2.6 Flash/Pro](https://mimo.xiaomi.com/mimo-v2-6)
 - **🏗️ Harness:** [Shoggoth](https://github.com/haliphax-ai/shoggoth) (custom)
