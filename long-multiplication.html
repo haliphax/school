@@ -760,7 +760,6 @@
         if (nextCarry > 0) marks.push({ row: 'car' + r, col: i + 1 + row.shift, cls: 'mk-new' });
 
         var noteBits = [];
-        if (carry > 0) noteBits.push('Start from the carry of ' + carry + '.');
         noteBits.push('Write ' + digit + ' in the ' + placeName(i + row.shift) + ' column of this row.');
         if (nextCarry > 0) {
           noteBits.push('Carry ' + nextCarry + ' into the ' + placeName(i + 1 + row.shift) + ' column.');
