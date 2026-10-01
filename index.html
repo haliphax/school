@@ -1,15 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>School stuff</title>
-  </head>
-  <body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>School stuff</title>
+<style>
+  :root {
+    --desk-1: #2c3542;
+    --desk-2: #1e2530;
+    --paper: #fdfaf2;
+    --paper-2: #f7efdf;
+    --paper-edge: #e7dcc4;
+    --ink: #22262d;
+    --ink-2: #59616e;
+    --ink-3: #9aa2af;
+    --accent: #1d4ed8;
+    --mono: "Cascadia Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", sans-serif;
+    --radius: 16px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(1100px 620px at 18% -12%, rgba(255,255,255,.09), transparent 62%),
+      radial-gradient(900px 640px at 112% 112%, rgba(255,255,255,.06), transparent 58%),
+      linear-gradient(160deg, var(--desk-1), var(--desk-2));
+    min-height: 100vh;
+    padding: 26px 18px 44px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app { max-width: 1220px; margin: 0 auto; }
+
+  /* ---------- header ---------- */
+  .app-header { color: #eef2f8; margin-bottom: 18px; }
+  .app-header h1 {
+    margin: 0;
+    font-size: clamp(1.35rem, 2.6vw, 1.85rem);
+    letter-spacing: .01em;
+    font-weight: 650;
+  }
+
+  /* ---------- filter bar ---------- */
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+
+  /* ---------- multiselect dropdown ---------- */
+  .ms { position: relative; }
+  .ms-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    font-family: var(--sans);
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--ink);
+    background: rgba(255,255,255,.93);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 10px;
+    padding: .55rem .85rem;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .ms-btn:hover { background: #fff; }
+  .ms-btn.active {
+    border-color: #7aa2ff;
+    box-shadow: 0 0 0 3px rgba(122,162,255,.35);
+  }
+  .ms-key {
+    font-size: .68rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 650;
+  }
+  .ms-val {
+    font-family: var(--mono);
+    font-size: .95rem;
+    max-width: 15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ms-caret {
+    width: 0;
+    height: 0;
+    border: .34rem solid transparent;
+    border-top-color: var(--ink-2);
+    margin-top: .22rem;
+    transition: transform .15s ease;
+    transform: rotate(0deg);
+  }
+  .ms.open .ms-caret { transform: rotate(180deg); margin-top: 0; }
+
+  .ms-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 30;
+    min-width: 13.5rem;
+    background: linear-gradient(180deg, #ffffff, #f6f8fc);
+    border: 1px solid rgba(255,255,255,.6);
+    border-radius: 12px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+    padding: .55rem;
+    display: none;
+  }
+  .ms.open .ms-panel { display: block; }
+  .ms-opt {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .45rem .55rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .92rem;
+    color: var(--ink);
+  }
+  .ms-opt:hover { background: #eef3fb; }
+  .ms-opt input {
+    accent-color: #2f6bff;
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+  }
+
+  /* ---------- paper ---------- */
+  .paper {
+    background:
+      linear-gradient(180deg, var(--paper), var(--paper-2)),
+      repeating-linear-gradient(0deg, rgba(160,140,100,.055) 0 1px, transparent 1px 100%);
+    background-blend-mode: multiply;
+    border: 1px solid var(--paper-edge);
+    border-radius: var(--radius);
+    box-shadow: 0 22px 50px rgba(0,0,0,.38), 0 2px 0 rgba(255,255,255,.35) inset;
+    padding: 20px 18px 8px;
+    overflow: hidden;
+  }
+
+  /* ---------- columnar link list ---------- */
+  .link-list {
+    --col-min: 248px;
+    --col-gap: 16px;
+    --cols: 3;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    column-width: var(--col-min);
+    column-count: var(--cols);
+    column-gap: var(--col-gap);
+  }
+  .link-list li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0 0 var(--col-gap);
+  }
+  .link-list li[hidden] { display: none; }
+  .link-list li a {
+    display: block;
+    background: linear-gradient(180deg, #ffffff, #fbf8f1);
+    border: 1px solid var(--paper-edge);
+    border-radius: 12px;
+    padding: .85rem .95rem .95rem;
+    text-decoration: none;
+    color: var(--ink);
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  .link-list li a:hover {
+    background: #fff;
+    border-color: #8fb0f5;
+  }
+  .link-list li a:active { transform: translateY(1px); }
+  .link-list .cat {
+    display: inline-block;
+    font-size: .62rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #23406e;
+    background: #e3ecff;
+    border: 1px solid #c4d7ff;
+    border-radius: 999px;
+    padding: .18rem .55rem;
+    margin-bottom: .55rem;
+  }
+  .link-list .t {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 650;
+    letter-spacing: .01em;
+  }
+  .link-list .d {
+    display: block;
+    margin-top: .32rem;
+    color: var(--ink-2);
+    font-size: .85rem;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 560px) {
+    .ms-val { max-width: 8.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
     <h1>School stuff</h1>
-    <ul>
-      <li><a href="long-division.html">Long division (with remainder)</a></li>
-      <li><a href="long-multiplication.html">Long multiplication</a></li>
+  </header>
+
+  <section class="toolbar" id="filter-bar" aria-label="Filters"></section>
+
+  <main class="paper">
+    <ul class="link-list" id="link-list">
+      <li data-category="math">
+        <a href="long-division.html">
+          <span class="cat">math</span>
+          <span class="t">Long Division</span>
+          <span class="d">Long division worked the way it is done on paper, one digit at a time.</span>
+        </a>
+      </li>
+      <li data-category="math">
+        <a href="https://haliphax.github.io/school/long-multiplication.html">
+          <span class="cat">math</span>
+          <span class="t">Long Multiplication</span>
+          <span class="d">Partial products, carries and column addition, step by step.</span>
+        </a>
+      </li>
     </ul>
-  </body>
+  </main>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     filters: one multiselect per entry, populated from the unique
+     values of that attribute on the <li> elements. Add another
+     entry here (e.g. { attr: 'data-grade', label: 'Grade' }) and
+     the dropdown + filtering wiring follows automatically.
+     ============================================================ */
+  var FILTERS = [
+    { attr: 'data-category', label: 'Category' }
+  ];
+
+  var list = document.getElementById('link-list');
+  var filterBar = document.getElementById('filter-bar');
+  var items = Array.prototype.slice.call(list.children);
+
+  function tokens(li, attr) {
+    return (li.getAttribute(attr) || '').trim().split(/[\s,]+/).filter(Boolean);
+  }
+
+  function uniqueValues(attr) {
+    var seen = {};
+    items.forEach(function (li) {
+      tokens(li, attr).forEach(function (v) { seen[v] = true; });
+    });
+    return Object.keys(seen).sort();
+  }
+
+  var filters = FILTERS.map(function (def) {
+    return { def: def, selected: [] };
+  });
+
+  /* ============================================================
+     dropdown widget
+     ============================================================ */
+  function buildDropdown(f) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ms';
+
+    var btn = document.createElement('button');
+    btn.className = 'ms-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-haspopup', 'true');
+    btn.setAttribute('aria-expanded', 'false');
+
+    var key = document.createElement('span');
+    key.className = 'ms-key';
+    key.textContent = f.def.label;
+
+    var val = document.createElement('span');
+    val.className = 'ms-val';
+    val.textContent = 'All';
+
+    var caret = document.createElement('span');
+    caret.className = 'ms-caret';
+    caret.setAttribute('aria-hidden', 'true');
+
+    btn.appendChild(key);
+    btn.appendChild(val);
+    btn.appendChild(caret);
+
+    var panel = document.createElement('div');
+    panel.className = 'ms-panel';
+    panel.setAttribute('role', 'group');
+    panel.setAttribute('aria-label', f.def.label + ' filter');
+
+    uniqueValues(f.def.attr).forEach(function (v) {
+      var opt = document.createElement('label');
+      opt.className = 'ms-opt';
+
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = v;
+      cb.addEventListener('change', function () {
+        f.selected = Array.prototype.slice.call(panel.querySelectorAll('input:checked'))
+          .map(function (i) { return i.value; });
+        apply();
+      });
+
+      opt.appendChild(cb);
+      opt.appendChild(document.createTextNode(v));
+      panel.appendChild(opt);
+    });
+
+    btn.addEventListener('click', function () {
+      var open = !wrap.classList.contains('open');
+      closeAll();
+      if (open) {
+        wrap.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    wrap.appendChild(btn);
+    wrap.appendChild(panel);
+    filterBar.appendChild(wrap);
+
+    f.wrap = wrap;
+    f.btn = btn;
+    f.valEl = val;
+  }
+
+  function closeAll() {
+    filters.forEach(function (f) {
+      f.wrap.classList.remove('open');
+      f.btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  /* click outside or Escape dismisses the dropdown */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('.ms')) return;
+    closeAll();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var open = filters.filter(function (f) { return f.wrap.classList.contains('open'); });
+    if (!open.length) return;
+    closeAll();
+    open[0].btn.focus();
+  });
+
+  /* ============================================================
+     filtering + column layout
+     ============================================================ */
+  function apply() {
+    var shown = [];
+
+    items.forEach(function (li) {
+      var ok = filters.every(function (f) {
+        if (!f.selected.length) return true;
+        var vals = tokens(li, f.def.attr);
+        return f.selected.some(function (v) { return vals.indexOf(v) !== -1; });
+      });
+      li.hidden = !ok;
+      if (ok) shown.push(li);
+    });
+
+    filters.forEach(function (f) {
+      f.valEl.textContent = f.selected.length ? f.selected.join(', ') : 'All';
+      f.btn.classList.toggle('active', f.selected.length > 0);
+    });
+
+    /* columns adapt to the viewport (via --col-min) and to how many items are
+       showing: never more columns than items, never more than the width fits */
+    var cs = getComputedStyle(list);
+    var minW = parseFloat(cs.getPropertyValue('--col-min')) || 248;
+    var gap = parseFloat(cs.getPropertyValue('--col-gap')) || 16;
+    var fit = Math.max(1, Math.floor((list.clientWidth + gap) / (minW + gap)));
+    var cols = Math.max(1, Math.min(fit, shown.length));
+    list.style.setProperty('--cols', String(cols));
+
+    /* spread the items evenly and force the column breaks ourselves: the
+       browser's balancer can pack columns unevenly and leave one empty,
+       which would waste the width it is supposed to fill */
+    items.forEach(function (li) { li.style.removeProperty('break-before'); });
+    var base = Math.floor(shown.length / cols);
+    var rem = shown.length % cols;
+    var idx = 0;
+    for (var c = 0; c < cols; c++) {
+      if (c > 0) shown[idx].style.setProperty('break-before', 'column');
+      idx += base + (c < rem ? 1 : 0);
+    }
+  }
+
+  filters.forEach(buildDropdown);
+  window.addEventListener('resize', apply);
+  apply();
+})();
+</script>
+</body>
 </html>
