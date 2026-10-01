@@ -230,14 +230,12 @@
     <ul class="link-list" id="link-list">
       <li data-category="math">
         <a href="long-division.html">
-          <span class="cat">math</span>
           <span class="t">Long Division</span>
           <span class="d">Long division worked the way it is done on paper, one digit at a time.</span>
         </a>
       </li>
       <li data-category="math">
         <a href="long-multiplication.html">
-          <span class="cat">math</span>
           <span class="t">Long Multiplication</span>
           <span class="d">Partial products, carries and column addition, step by step.</span>
         </a>
@@ -250,6 +248,14 @@
 <script>
 (function () {
   'use strict';
+
+  // add category pills to listings
+  Array.from(document.querySelectorAll('li[data-category] > a')).forEach((v, i, a) => {
+    const s = document.createElement("span");
+    s.classList.add("cat");
+    s.innerHTML = v.parentNode.dataset.category;
+    v.insertBefore(s, v.childNodes[0]);
+  });
 
   /* ============================================================
      filters: one multiselect per entry, populated from the unique
