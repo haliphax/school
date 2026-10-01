@@ -4,4 +4,4 @@ Some web applications I've hastily thrown together to help my kids with school p
 
 [Homepage](https://haliphax.github.io/school)
 
-**⚠️ Disclaimer: AI tools have been used to assist in building some of the tools in this repository.**
+**⚠️ Disclaimer: AI tools have been used to assist in building some of the applications in this repository.**
